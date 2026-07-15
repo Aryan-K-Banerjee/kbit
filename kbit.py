@@ -1,4 +1,5 @@
 import argparse
+import os
 
 def main():
     parser = argparse.ArgumentParser(description="kbit command line parser")
@@ -19,7 +20,31 @@ def main():
         unknown()
 
 def init():
-    print("initialized .kbit folder")
+    CWD = os.getcwd()
+    KBIT_D = os.path.join(CWD, ".kbit")
+    OBJECTS_D = os.path.join(KBIT_D, "objects")
+    REFS_D = os.path.join(KBIT_D, "refs", "heads")
+    HEAD = os.path.join(KBIT_D, "HEAD")
+    INDEX = os.path.join(KBIT_D, "index")
+
+    if os.path.isdir(KBIT_D):
+        print(".kbit directory already exists!")
+        if not os.path.isdir(OBJECTS_D):
+           print("objects/ directory missing, will be initialized")
+        if not os.path.isdir(REFS_D):
+            print("refs/heads/ directory missing, will be initialized")
+        if not os.path.isfile(HEAD):
+            print("HEAD missing, will be initialized")
+        if not os.path.isfile(INDEX):
+            print("index is missing, will be initialized")
+    else:
+        print(".kbit directory initialized!")
+
+    os.makedirs(KBIT_D, exist_ok=True)
+    os.makedirs(OBJECTS_D, exist_ok=True)
+    os.makedirs(REFS_D, exist_ok=True)
+    open(HEAD, 'a').close()
+    open(INDEX, 'a').close()
 
 def add():
     print("Added files to staging area")
