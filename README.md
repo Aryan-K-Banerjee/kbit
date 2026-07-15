@@ -8,7 +8,7 @@ I will start in Python implementing
 - kbit commit -m "<message>"
 
 ## Env and Structure:
-I am using uv to create the venv and manage the python version. The version I am using is 3.12.13 as it is stable and the goal is setup speed.
+I am using uv to create the venv and manage the python version. The version I am using is 3.12.13 as it is stable and the goal is setup speed. Pytest is used for testing
 
 File Structure:
 I am keeping it simple, just a python file, a shell script to use the tool directly, some tests and fake repo
