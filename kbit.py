@@ -43,7 +43,8 @@ def init():
     os.makedirs(KBIT_D, exist_ok=True)
     os.makedirs(OBJECTS_D, exist_ok=True)
     os.makedirs(REFS_D, exist_ok=True)
-    open(HEAD, 'a').close()
+    if not os.path.isfile(HEAD):            #ensuring the HEAD is initialized with a default branch
+        open(HEAD, 'w').write("refs/heads/main")
     open(INDEX, 'a').close()
 
 def add():

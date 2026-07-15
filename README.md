@@ -39,5 +39,7 @@ I will create a .kbit folder within which I will have the standard 4 things.
 
 So the git init command will be a function init() in the python file which will basically create the .kbit folder in the repo root and ensure what to do if a kbit folder already exists. I will also write tests to ensure this works
 
+Also the HEAD when initially created points to a default branch, like main and it points to say refs/heads/main as that is where the commit hash will be.
+
 ## Step 0.5 (Before Step 1)
 I realized I need to make the parser first so I will do that. I will start within python only for now, have it take in the commands and keep things simple for now.
