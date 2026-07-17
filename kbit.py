@@ -65,6 +65,10 @@ def add(paths):
                 print(path, "is a file")
             elif os.path.isdir(path):
                 print(path, "is a dir")
+                for root, dirs, files in os.walk(path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        print(file_path)
 
 def commit():
     print("Committed Changes")
