@@ -57,18 +57,24 @@ def init():
 def add(paths):
     if not os.path.isdir(KBIT_D):
         print("No .kbit directory found! Run kbit init first")
-    else:
-        for path in paths:
-            if not os.path.exists(path):
-                print(path, "does not exist!")
-            elif os.path.isfile(path):
-                print(path, "is a file")
-            elif os.path.isdir(path):
-                print(path, "is a dir")
-                for root, dirs, files in os.walk(path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        print(file_path)
+        return
+    file_list = set()
+    for path in paths:
+        if not os.path.exists(path):
+            print(path, "does not exist!")
+        elif os.path.isfile(path):
+            file_list.add(path)
+        elif os.path.isdir(path):
+            print(path, "is a dir")
+            for root, dirs, files in os.walk(path):
+                if ".kbit" in dirs:
+                    dirs.remove(".kbit")
+                    
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    file_list.add(file_path)
+    
+    print(file_list)
 
 def commit():
     print("Committed Changes")
