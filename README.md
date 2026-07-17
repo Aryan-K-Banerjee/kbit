@@ -43,3 +43,8 @@ Also the HEAD when initially created points to a default branch, like main and i
 
 ## Step 0.5 (Before Step 1)
 I realized I need to make the parser first so I will do that. I will start within python only for now, have it take in the commands and keep things simple for now.
+
+## Step 0.75 (Testing)
+I also added testing through pytest and will write unit tests as a practice
+
+## Step 2: kbit add
