@@ -1,5 +1,6 @@
 import argparse
 import os
+from hashlib import sha1
 
 CWD = os.getcwd()
 KBIT_D = os.path.join(CWD, ".kbit")
@@ -34,6 +35,7 @@ def main():
         unknown()
 
 def init():
+    # Checking if the .kbit folder is already initialized and if anything is missing
     if os.path.isdir(KBIT_D):
         print(".kbit directory already exists!")
         if not os.path.isdir(OBJECTS_D):
@@ -47,6 +49,7 @@ def init():
     else:
         print(".kbit directory initialized!")
 
+    #Initializing the actual .kbit folder structure
     os.makedirs(KBIT_D, exist_ok=True)
     os.makedirs(OBJECTS_D, exist_ok=True)
     os.makedirs(REFS_D, exist_ok=True)
@@ -55,9 +58,12 @@ def init():
     open(INDEX, 'a').close()
 
 def add(paths):
+    #Ensuring the Kbit Directory is initialized
     if not os.path.isdir(KBIT_D):
         print("No .kbit directory found! Run kbit init first")
         return
+    
+    #Getting all files that are added
     file_list = set()
     for path in paths:
         if not os.path.exists(path):
@@ -70,11 +76,34 @@ def add(paths):
                 if ".kbit" in dirs:
                     dirs.remove(".kbit")
                     
-                for file in files:
-                    file_path = os.path.join(root, file)
+                for f in files:
+                    file_path = os.path.join(root, f)
                     file_list.add(file_path)
     
-    print(file_list)
+    # Getting the contents 
+    for f in file_list:
+        print(f)
+        blob, b_hash = make_blob(f)
+        obj_addr = ".kbit/objects/"+b_hash
+        if os.path.isfile(obj_addr):
+            print(f + " is not changed")
+        else:
+            obj = open(obj_addr, "wb")
+            obj.write(blob)
+            obj.close()
+
+def hash_content(content):
+    return sha1(content).hexdigest()
+
+def make_blob(file_path):
+    #make the blob header - blob <num_bytes>\0<content>
+    content = open(file_path, "rb").read()
+    num_bytes = len(content)
+    header = "blob " + str(num_bytes) + "\0"
+    blob = header.encode("utf-8") + content
+    b_hash = hash_content(blob)
+
+    return blob, b_hash
 
 def commit():
     print("Committed Changes")

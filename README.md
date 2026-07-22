@@ -48,3 +48,6 @@ I realized I need to make the parser first so I will do that. I will start withi
 I also added testing through pytest and will write unit tests as a practice
 
 ## Step 2: kbit add
+First read all files using os
+Get their path and content
+Then hash each file content
