@@ -62,7 +62,14 @@ def add(paths):
     if not os.path.isdir(KBIT_D):
         print("No .kbit directory found! Run kbit init first")
         return
-    
+
+    #getting currently indexed files
+    index_map = {}
+    with open(INDEX, 'r') as index_file:
+        for line in index_file:
+            elements = line.strip().split('\t')
+            index_map[elements[0]] = elements[1]
+            
     #Getting all files that are added
     file_list = set()
     for path in paths:
@@ -79,18 +86,26 @@ def add(paths):
                 for f in files:
                     file_path = os.path.join(root, f)
                     file_list.add(file_path)
-    
-    # Getting the contents 
+
+    # Blobbing and updating index
     for f in file_list:
         print(f)
         blob, b_hash = make_blob(f)
-        obj_addr = ".kbit/objects/"+b_hash
-        if os.path.isfile(obj_addr):
-            print(f + " is not changed")
-        else:
+        obj_addr = OBJECTS_D + '/' + b_hash
+        if not os.path.isfile(obj_addr):
             obj = open(obj_addr, "wb")
             obj.write(blob)
             obj.close()
+
+        if f not in index_map or index_map[f] != b_hash:
+            print(f + " was updated!")
+        index_map[f] = b_hash
+
+    # Writing back to the index file
+    with open(INDEX, 'w') as index_file:
+        for key, value in index_map.items():
+            index_file.write(key + "\t" + value + "\n")
+        
 
 def hash_content(content):
     return sha1(content).hexdigest()

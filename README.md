@@ -51,3 +51,6 @@ I also added testing through pytest and will write unit tests as a practice
 First read all files using os
 Get their path and content
 Then hash each file content
+Then add them to index
+
+I am seperately going to add a delete command to remove a file from the index as implementing that within add is a lot of code and kind of besides the point of understanding how git works.
