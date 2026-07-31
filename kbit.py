@@ -22,6 +22,7 @@ def main():
     
     #commit command
     p_commit = subparsers.add_parser("commit", help="Commit staged changes")
+    p_commit.add_argument("-m", help="Commit message")
     
     args = parser.parse_args()
 
@@ -30,7 +31,7 @@ def main():
     elif args.command == "add":
         add(args.paths)
     elif args.command == "commit":
-        commit()
+        commit(args.m)
     else:
         unknown()
 
@@ -69,7 +70,7 @@ def add(paths):
         for line in index_file:
             elements = line.strip().split('\t')
             index_map[elements[0]] = elements[1]
-            
+
     #Getting all files that are added
     file_list = set()
     for path in paths:
@@ -106,7 +107,6 @@ def add(paths):
         for key, value in index_map.items():
             index_file.write(key + "\t" + value + "\n")
         
-
 def hash_content(content):
     return sha1(content).hexdigest()
 
@@ -120,8 +120,45 @@ def make_blob(file_path):
 
     return blob, b_hash
 
-def commit():
-    print("Committed Changes")
+def commit(message):
+    tree_obj, t_hash = make_tree()
+    branch = open(HEAD, "r").read()
+    previous_commit_hash = None if not os.path.isfile(KBIT_D + "/" + branch) else open(KBIT_D + "/" + branch, "r").read().strip()
+    commit_obj, c_hash = make_commit(t_hash, previous_commit_hash, message)
+    tree_addr = OBJECTS_D + '/' + t_hash
+    commit_addr = OBJECTS_D + "/" + c_hash
+    open(tree_addr, "wb").write(tree_obj)
+    open(commit_addr, "wb").write(commit_obj)
+    open(KBIT_D + "/" + branch, 'w').write(c_hash)
+    print(branch, previous_commit_hash, message)
+
+def make_tree():
+    index_map = {}
+    with open(INDEX, 'r') as index_file:
+        for line in index_file:
+            elements = line.strip().split('\t')
+            index_map[elements[0]] = elements[1]
+    sorted_items = sorted(index_map.items())
+    content = b""
+    for key, val in sorted_items:
+        content += f"{key}\t{val}\n".encode("utf-8")
+    num_bytes = len(content)
+    header = "tree " + str(num_bytes) + "\0"
+    tree = header.encode("utf-8") + content
+    t_hash = hash_content(tree)
+    return tree, t_hash
+
+def make_commit(t_hash, previous_commit_hash, message):
+    content = f"tree\t{t_hash}\n"
+    if previous_commit_hash is not None:
+        content += f"parent\t{previous_commit_hash}\n"
+    content += message
+    content = content.encode("utf-8")
+    num_bytes = len(content)
+    header = "commit " + str(num_bytes) + "\0"
+    commit = header.encode("utf-8") + content
+    c_hash = hash_content(commit)
+    return commit, c_hash
 
 def unknown():
     print("Unknown command")
