@@ -72,3 +72,6 @@ Now that this is done I will also add a checkout command
 
 ## Step 4: kbit rm <filename> and kbit checkout <commit_hash>  
 These are the final two commands in this project which are mostly added for posterity and so the project is functional enough to use if needed. I will also add some tests to ensure the project works as intended
+
+# Final Reflection
+This was a good project that helped me really understand how Git itself works and the architecture and design choices to facilitate a good version control system. I had some good problems to solve and coming up with my own solutions was quite interesting especially when compared with how Git handles the same problem. Undestanding these problems helped me understand Git as well. Kbit does not match git byte for byte and is instead my simplified version that could still be used and simply extended for real use.
