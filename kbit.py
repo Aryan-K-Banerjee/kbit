@@ -22,8 +22,16 @@ def main():
     
     #commit command
     p_commit = subparsers.add_parser("commit", help="Commit staged changes")
-    p_commit.add_argument("-m", help="Commit message")
-    
+    p_commit.add_argument("-m", required=True, help="Commit message")
+
+    #rm command
+    p_rm = subparsers.add_parser("rm", help="Remove any tracked file from index")
+    p_rm.add_argument("file", help="File to remove")
+
+    #checkout command
+    p_checkout = subparsers.add_parser("checkout", help="Checkout a specific commit")
+    p_checkout.add_argument("hash", help="Commit hash to checkout")
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -32,6 +40,10 @@ def main():
         add(args.paths)
     elif args.command == "commit":
         commit(args.m)
+    elif args.command == "rm":
+        rm(args.file)
+    elif args.command == "checkout":
+        checkout(args.hash)
     else:
         unknown()
 
@@ -79,7 +91,6 @@ def add(paths):
         elif os.path.isfile(path):
             file_list.add(path)
         elif os.path.isdir(path):
-            print(path, "is a dir")
             for root, dirs, files in os.walk(path):
                 if ".kbit" in dirs:
                     dirs.remove(".kbit")
@@ -121,6 +132,11 @@ def make_blob(file_path):
     return blob, b_hash
 
 def commit(message):
+    #Ensuring the Kbit Directory is initialized
+    if not os.path.isdir(KBIT_D):
+        print("No .kbit directory found! Run kbit init first")
+        return
+
     tree_obj, t_hash = make_tree()
     branch = open(HEAD, "r").read()
     previous_commit_hash = None if not os.path.isfile(KBIT_D + "/" + branch) else open(KBIT_D + "/" + branch, "r").read().strip()
@@ -130,7 +146,7 @@ def commit(message):
     open(tree_addr, "wb").write(tree_obj)
     open(commit_addr, "wb").write(commit_obj)
     open(KBIT_D + "/" + branch, 'w').write(c_hash)
-    print(branch, previous_commit_hash, message)
+    print("Committed changes: " + c_hash)
 
 def make_tree():
     index_map = {}
@@ -159,6 +175,99 @@ def make_commit(t_hash, previous_commit_hash, message):
     commit = header.encode("utf-8") + content
     c_hash = hash_content(commit)
     return commit, c_hash
+
+def rm(file_trm):
+    #Ensuring the Kbit Directory is initialized
+    if not os.path.isdir(KBIT_D):
+        print("No .kbit directory found! Run kbit init first")
+        return
+
+    #Opening the index as a hashmap
+    index_map = {}
+    with open(INDEX, 'r') as index_file:
+        for line in index_file:
+            elements = line.strip().split('\t')
+            index_map[elements[0]] = elements[1]
+
+    #Looking for and removing target with message
+    if file_trm in index_map:
+        del index_map[file_trm]
+        print(file_trm + " is removed!")
+    else:
+        print("File not in index")
+
+    with open(INDEX, 'w') as index_file:
+            for key, value in index_map.items():
+                index_file.write(key + "\t" + value + "\n")
+
+def checkout(commit_hash):
+    #Finding commit hash and object
+    commit_addr = OBJECTS_D + "/" + commit_hash
+
+    if not os.path.isfile(commit_addr):
+        print("Commit not found!")
+        return
+
+    commit_obj = open(commit_addr, "rb").read()
+    c_header, c_content = commit_obj.split(b"\0", 1)
+
+    if not c_header.startswith(b"commit "):
+        print("Hash is not a commit!")
+        return
+
+    #Isolating tree line and finding tree object
+    t_line = c_content.split(b"\n", 1)[0]
+    t_name, t_hash = t_line.split(b"\t", 1)
+
+    if t_name != b"tree":
+        print("Commit does not contain a valid tree!")
+        return
+
+    t_hash = t_hash.decode("utf-8")
+    tree_addr = OBJECTS_D + "/" + t_hash
+
+    if not os.path.isfile(tree_addr):
+        print("Tree not found!")
+        return
+
+    #Finding tree content
+    tree_obj = open(tree_addr, "rb").read()
+    t_header, t_content = tree_obj.split(b"\0", 1)
+
+    if not t_header.startswith(b"tree "):
+        print("Hash for tree is not a tree!")
+        return
+
+    #Finding the individual files
+    lines = t_content.split(b"\n")
+    for line in lines:
+        #skipping any empty lines
+        if not line:
+            continue
+
+        #extracting files
+        file_name, blob_hash = line.split(b'\t', 1)
+        file_name = file_name.decode("utf-8")
+        blob_hash = blob_hash.decode("utf-8")
+
+        #reconstructing blob
+        blob_addr = OBJECTS_D + '/' + blob_hash
+        if not os.path.isfile(blob_addr):
+            print("Blob not found for", file_name)
+            return
+        blob_obj = open(blob_addr, 'rb').read()
+        b_header, b_content = blob_obj.split(b'\0', 1)
+
+        if not b_header.startswith(b'blob '):
+            print("Hash for", file_name, "is not a blob!")
+            return
+
+        #making sure to recreate any parent directories
+        parent_dir = os.path.dirname(file_name)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
+        open(file_name, 'wb').write(b_content)
+        print(file_name, "was restored!")
 
 def unknown():
     print("Unknown command")
